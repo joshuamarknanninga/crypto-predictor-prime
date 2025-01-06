@@ -7,6 +7,7 @@ import './App.css';
 function App() {
   const [cryptoData, setCryptoData] = useState([]);
   const [predictions, setPredictions] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const getData = async () => {
@@ -18,6 +19,7 @@ function App() {
         setPredictions(predResponse.data);
       } catch (error) {
         console.error('Error fetching data:', error);
+        setError('Failed to fetch data. Please try again later.');
       }
     };
 
@@ -27,9 +29,10 @@ function App() {
   return (
     <div className="App">
       <h1>Crypto Predictor</h1>
+      {error && <p className="error">{error}</p>}
       <div className="crypto-container">
-        {cryptoData.map(coin => {
-          const pred = predictions.find(p => p.name === coin.name);
+        {cryptoData.map((coin) => {
+          const pred = predictions.find((p) => p.name === coin.name);
           return (
             <CryptoCard
               key={coin.name}
