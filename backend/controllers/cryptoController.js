@@ -1,21 +1,14 @@
 // backend/controllers/cryptoController.js
 const axios = require('axios');
-const { predictLevels } = require('../utils/prediction');
-const NodeCache = require('node-cache');
 const Crypto = require('../models/cryptoModel'); // Import the Crypto model
+const NodeCache = require('node-cache');
 const cache = new NodeCache({ stdTTL: 3600 }); // Cache for 1 hour
+const { predictLevels } = require('../utils/prediction'); // Your prediction logic
 
-const COINS = ['bitcoin', 'ethereum', 'dogecoin', 'shiba-inu']; // Removed 'pepe'
-
-const COIN_SYMBOLS = {
-  bitcoin: 'BTC',
-  ethereum: 'ETH',
-  dogecoin: 'DOGE',
-  'shiba-inu': 'SHIB',
-};
+const COINS = ['bitcoin', 'ethereum', 'dogecoin', 'shiba-inu']; // CoinGecko uses lowercase IDs
 
 /**
- * Fetch cryptocurrency data from CoinMarketCap API with caching.
+ * Fetch cryptocurrency data from CoinGecko API with caching.
  * @returns {Array} Array of cryptocurrency data.
  */
 const fetchCryptoData = async () => {
@@ -25,91 +18,65 @@ const fetchCryptoData = async () => {
     return cache.get(cacheKey);
   }
 
-  console.log('Fetching crypto data from CoinMarketCap API.');
-  const API_KEY = process.env.COINMARKETCAP_API_KEY;
-  if (!API_KEY) {
-    throw new Error('COINMARKETCAP_API_KEY is not set in the environment variables.');
-  }
+  console.log('Fetching crypto data from CoinGecko API.');
 
   try {
-    const today = new Date();
-    const time_end = today.toISOString().split('T')[0]; // 'YYYY-MM-DD'
-    const time_start = '2013-04-28'; // Example start date, adjust as needed
+    const dataPromises = COINS.map(async (coin) => {
+      try {
+        console.log(`Fetching data for ${coin} from CoinGecko.`);
+        const response = await axios.get(`https://api.coingecko.com/api/v3/coins/${coin}/market_chart`, {
+          params: {
+            vs_currency: 'usd',
+            days: '365', // Fetches maximum available data
+          },
+        });
 
-    const responses = await Promise.all(
-      COINS.map(async (coin) => {
-        const symbol = COIN_SYMBOLS[coin];
-        if (!symbol) {
-          console.warn(`Symbol for coin "${coin}" is not defined. Skipping.`);
-          return {
+        // Map the prices to { timestamp, close }
+        const prices = response.data.prices.map((price) => ({
+          timestamp: new Date(price[0]),
+          close: price[1],
+        }));
+
+        console.log(`Successfully fetched data for ${coin}.`);
+
+        // Find if the crypto already exists
+        let crypto = await Crypto.findOne({ symbol: coin.toUpperCase() });
+        if (crypto) {
+          // Update existing data
+          crypto.prices = prices;
+          crypto.predictions = predictLevels(prices);
+        } else {
+          // Create new entry
+          crypto = new Crypto({
             name: coin,
-            prices: [],
-            error: `Symbol for ${coin} is not defined.`,
-          };
-        }
-
-        try {
-          console.log(`Fetching data for ${symbol} from CoinMarketCap.`);
-          const response = await axios.get('https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/historical', {
-            headers: { 'X-CMC_PRO_API_KEY': API_KEY },
-            params: {
-              symbol: symbol,
-              time_start: time_start,
-              time_end: time_end,
-              interval: 'daily',
-            },
-          });
-
-          // Check if data exists for the coin
-          if (!response.data.data.quotes) {
-            throw new Error(`No historical quotes found for ${symbol}.`);
-          }
-
-          // Map the quotes to { timestamp, close }
-          const prices = response.data.data.quotes.map((quote) => ({
-            timestamp: new Date(quote.timestamp),
-            close: quote.quote.USD.close,
-          }));
-
-          console.log(`Successfully fetched data for ${symbol}.`);
-
-          // Find if the crypto already exists
-          let crypto = await Crypto.findOne({ symbol: symbol });
-          if (crypto) {
-            // Update existing data
-            crypto.prices = prices;
-            crypto.predictions = predictLevels(crypto.prices);
-          } else {
-            // Create new entry
-            crypto = new Crypto({
-              name: coin,
-              symbol: symbol,
-              prices: prices,
-              predictions: predictLevels(prices),
-            });
-          }
-
-          await crypto.save();
-
-          return {
-            name: coin,
+            symbol: coin.toUpperCase(),
             prices: prices,
-          };
-        } catch (error) {
-          console.error(`Error fetching data for ${symbol}:`, error.response ? error.response.data : error.message);
-          return {
-            name: coin,
-            prices: [],
-            error: `Failed to fetch data for ${symbol}.`,
-          };
+            predictions: predictLevels(prices),
+          });
         }
-      })
-    );
 
-    cache.set(cacheKey, responses);
-    return responses;
+        await crypto.save();
+
+        return {
+          name: coin,
+          prices: prices,
+          predictions: crypto.predictions,
+        };
+      } catch (error) {
+        console.error(`Error fetching data for ${coin}:`, error.response ? error.response.data : error.message);
+        return {
+          name: coin,
+          prices: [],
+          error: `Failed to fetch data for ${coin}.`,
+        };
+      }
+    });
+
+    const cryptoData = await Promise.all(dataPromises);
+    cache.set(cacheKey, cryptoData);
+    return cryptoData;
   } catch (error) {
-    console.error('Error fetching data from CoinMarketCap API:', error.message);
+    console.error('Error fetching data from CoinGecko API:', error.message);
     throw error;
   }
 };
@@ -139,7 +106,7 @@ const getPredictions = async (req, res) => {
 
     const predictions = validCryptoData.map((coin) => ({
       name: coin.name,
-      predictions: predictLevels(coin.prices),
+      predictions: coin.predictions,
     }));
 
     res.json(predictions);

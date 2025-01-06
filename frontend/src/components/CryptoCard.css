@@ -6,17 +6,21 @@
   margin: 16px;
   width: 300px;
   box-shadow: 2px 2px 12px rgba(0,0,0,0.1);
+  background-color: #f9f9f9;
 }
 
 .crypto-card h2 {
   margin-bottom: 8px;
+  text-align: center;
 }
 
 .crypto-card p {
   margin-bottom: 16px;
+  text-align: center;
 }
 
 .error {
   color: red;
   font-weight: bold;
+  text-align: center;
 }

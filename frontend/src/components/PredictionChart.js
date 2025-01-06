@@ -1,43 +1,26 @@
 // frontend/src/components/PredictionChart.js
 import React from 'react';
-import { Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Title, Tooltip, Legend } from 'chart.js';
-
-ChartJS.register(
-  BarElement,
-  CategoryScale,
-  LinearScale,
-  Title,
-  Tooltip,
-  Legend
-);
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 const PredictionChart = ({ predictions }) => {
-  const data = {
-    labels: Object.keys(predictions),
-    datasets: [
-      {
-        label: 'Predicted Price (USD)',
-        data: Object.values(predictions),
-        backgroundColor: 'rgba(75,192,192,0.6)',
-      },
-    ],
-  };
+  const data = [
+    { name: '2 Years', price: predictions.year_2 },
+    { name: '5 Years', price: predictions.year_5 },
+    { name: '10 Years', price: predictions.year_10 },
+  ];
 
-  const options = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'top',
-      },
-      title: {
-        display: true,
-        text: 'Price Predictions',
-      },
-    },
-  };
-
-  return <Bar data={data} options={options} />;
+  return (
+    <div style={{ width: '100%', height: 200 }}>
+      <ResponsiveContainer>
+        <BarChart data={data}>
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
+          <Bar dataKey="price" fill="#8884d8" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
 };
 
 export default PredictionChart;

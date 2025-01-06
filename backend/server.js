@@ -33,22 +33,19 @@ app.use(express.json());
 // Connect to MongoDB
 const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/crypto-predictor';
 
-mongoose.connect(mongoURI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('Connected to MongoDB'))
-.catch((err) => {
-  console.error('Failed to connect to MongoDB:', err.message);
-  process.exit(1);
-});
+mongoose.connect(mongoURI)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch((err) => {
+    console.error('Failed to connect to MongoDB:', err.message);
+    process.exit(1);
+  });
 
 // Routes
 app.use('/api/crypto', cryptoRoutes);
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
-  console.error('Unhandled Error:', err);
+  console.error('Unhandled Error:', err.stack);
   res.status(500).json({ error: 'Internal Server Error' });
 });
 

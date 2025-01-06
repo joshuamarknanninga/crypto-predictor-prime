@@ -39,6 +39,7 @@ function App() {
               name={coin.name}
               prices={coin.prices}
               predictions={pred ? pred.predictions : {}}
+              error={coin.error}
             />
           );
         })}

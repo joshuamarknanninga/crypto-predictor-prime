@@ -1,3 +1,4 @@
+
 {
   "name": "backend",
   "version": "1.0.0",
@@ -8,15 +9,17 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
-    "axios": "^0.27.2",
+    "axios": "^0.21.1",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "express-rate-limit": "^7.5.0",
-    "mongoose": "^8.9.3",
-    "node-cache": "^5.1.2"
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "mongoose": "^6.0.12",
+    "node-cache": "^5.1.2",
+    "express-rate-limit": "^6.0.5"
   },
   "devDependencies": {
-    "nodemon": "^2.0.20"
-  }
+    "nodemon": "^2.0.12"
+  },
+  "author": "",
+  "license": "ISC"
 }
