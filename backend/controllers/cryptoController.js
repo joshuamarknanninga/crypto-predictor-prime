@@ -2,17 +2,16 @@
 const axios = require('axios');
 const { predictLevels } = require('../utils/prediction');
 const NodeCache = require('node-cache');
+const Crypto = require('../models/cryptoModel'); // Import the Crypto model
 const cache = new NodeCache({ stdTTL: 3600 }); // Cache for 1 hour
 
-const COINS = ['bitcoin', 'ethereum', 'dogecoin', 'shiba-inu', 'pepe'];
+const COINS = ['bitcoin', 'ethereum', 'dogecoin', 'shiba-inu']; // Removed 'pepe'
 
-// Mapping of CoinGecko names to CoinMarketCap symbols
 const COIN_SYMBOLS = {
   bitcoin: 'BTC',
   ethereum: 'ETH',
   dogecoin: 'DOGE',
   'shiba-inu': 'SHIB',
-  pepe: 'PEPE', // Ensure 'PEPE' is listed on CoinMarketCap
 };
 
 /**
@@ -41,10 +40,16 @@ const fetchCryptoData = async () => {
       COINS.map(async (coin) => {
         const symbol = COIN_SYMBOLS[coin];
         if (!symbol) {
-          throw new Error(`Symbol for coin "${coin}" is not defined.`);
+          console.warn(`Symbol for coin "${coin}" is not defined. Skipping.`);
+          return {
+            name: coin,
+            prices: [],
+            error: `Symbol for ${coin} is not defined.`,
+          };
         }
 
         try {
+          console.log(`Fetching data for ${symbol} from CoinMarketCap.`);
           const response = await axios.get('https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/historical', {
             headers: { 'X-CMC_PRO_API_KEY': API_KEY },
             params: {
@@ -60,11 +65,31 @@ const fetchCryptoData = async () => {
             throw new Error(`No historical quotes found for ${symbol}.`);
           }
 
-          // Map the quotes to [timestamp, close price]
-          const prices = response.data.data.quotes.map((quote) => [
-            new Date(quote.timestamp).getTime(),
-            quote.quote.USD.close,
-          ]);
+          // Map the quotes to { timestamp, close }
+          const prices = response.data.data.quotes.map((quote) => ({
+            timestamp: new Date(quote.timestamp),
+            close: quote.quote.USD.close,
+          }));
+
+          console.log(`Successfully fetched data for ${symbol}.`);
+
+          // Find if the crypto already exists
+          let crypto = await Crypto.findOne({ symbol: symbol });
+          if (crypto) {
+            // Update existing data
+            crypto.prices = prices;
+            crypto.predictions = predictLevels(crypto.prices);
+          } else {
+            // Create new entry
+            crypto = new Crypto({
+              name: coin,
+              symbol: symbol,
+              prices: prices,
+              predictions: predictLevels(prices),
+            });
+          }
+
+          await crypto.save();
 
           return {
             name: coin,

@@ -1,9 +1,22 @@
 /* frontend/src/components/CryptoCard.css */
 .crypto-card {
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 16px;
-    margin: 16px;
-    width: 300px;
-  }
-  
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px;
+  width: 300px;
+  box-shadow: 2px 2px 12px rgba(0,0,0,0.1);
+}
+
+.crypto-card h2 {
+  margin-bottom: 8px;
+}
+
+.crypto-card p {
+  margin-bottom: 16px;
+}
+
+.error {
+  color: red;
+  font-weight: bold;
+}
