@@ -1,6 +1,16 @@
 // frontend/src/components/PredictionChart.js
 import React from 'react';
 import { Bar } from 'react-chartjs-2';
+import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Title, Tooltip, Legend } from 'chart.js';
+
+ChartJS.register(
+  BarElement,
+  CategoryScale,
+  LinearScale,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const PredictionChart = ({ predictions }) => {
   const data = {
@@ -14,7 +24,20 @@ const PredictionChart = ({ predictions }) => {
     ],
   };
 
-  return <Bar data={data} />;
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: 'Price Predictions',
+      },
+    },
+  };
+
+  return <Bar data={data} options={options} />;
 };
 
 export default PredictionChart;
