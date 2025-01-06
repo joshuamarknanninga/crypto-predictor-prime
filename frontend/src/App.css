@@ -1,0 +1,12 @@
+/* frontend/src/App.css */
+.App {
+    text-align: center;
+    padding: 20px;
+  }
+  
+  .crypto-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
