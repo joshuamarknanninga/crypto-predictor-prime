@@ -1,6 +1,8 @@
 // backend/server.js
 const express = require('express');
 const cors = require('cors');
+const http = require('http');
+const WebSocket = require('ws');
 const rateLimit = require('express-rate-limit');
 const mongoose = require('mongoose'); // Import Mongoose
 const cryptoRoutes = require('./routes/cryptoRoutes');
@@ -29,6 +31,27 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+
+// Create WebSocket server
+const wss = new WebSocket.Server({ server });
+
+// Handle WebSocket connections
+wss.on('connection', (ws) => {
+    console.log('Client connected');
+
+    // Send a message to the client
+    ws.send('Welcome to the WebSocket server!');
+
+    // Handle incoming messages from the client
+    ws.on('message', (message) => {
+        console.log(`Received: ${message}`);
+    });
+
+    // Handle WebSocket close
+    ws.on('close', () => {
+        console.log('Client disconnected');
+    });
+});
 
 // Connect to MongoDB
 const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/crypto-predictor';
