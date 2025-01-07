@@ -1,7 +1,7 @@
 // backend/server.js
 const express = require('express');
 const cors = require('cors');
-const http = require('http');
+const http = require('http'); // Import HTTP module
 const WebSocket = require('ws');
 const rateLimit = require('express-rate-limit');
 const mongoose = require('mongoose'); // Import Mongoose
@@ -10,6 +10,9 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Create an HTTP server to attach WebSocket
+const server = http.createServer(app);
 
 // Rate Limiting Configuration
 const limiter = rateLimit({
@@ -33,7 +36,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 // Create WebSocket server
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({ server }); // Attach WebSocket server to HTTP server
 
 // Handle WebSocket connections
 wss.on('connection', (ws) => {
@@ -73,6 +76,6 @@ app.use((err, req, res, next) => {
 });
 
 // Start the server
-app.listen(PORT, `0.0.0.0`, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });

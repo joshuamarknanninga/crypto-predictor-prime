@@ -1,10 +1,14 @@
-// backend/routes/cryptoRoutes.js
 const express = require('express');
-const { getCryptoData, getPredictions } = require('../controllers/cryptoController');
-
 const router = express.Router();
 
-router.get('/data', getCryptoData);
-router.get('/predictions', getPredictions);
+// Mock predictions data
+const predictions = [
+    { name: 'Bitcoin', predictions: { nextDay: 50000, nextWeek: 51000 } },
+    { name: 'Ethereum', predictions: { nextDay: 3000, nextWeek: 3200 } },
+];
+
+router.get('/predictions', (req, res) => {
+    res.json(predictions);
+});
 
 module.exports = router;
